@@ -21,14 +21,13 @@ my $fhemwebdir = "/home/httpd/cgi-bin";			# the fhemweb.pl & style.css files liv
 my $faq				 = "/home/httpd/cgi-bin/faq.html";
 my $howto      = "/home/httpd/cgi-bin/HOWTO.html";
 my $doc        = "/home/httpd/cgi-bin/commandref.html";
-my $tmpfile    = "/tmp/pgm5-";							# the Images will be rendered there with beginning of name
+my $tmpfile    = "/tmp/pgm6-";							# the Images will be rendered there with beginning of name
 my $configfile = "/etc/fhem.conf";					# the fhem.conf file is that
 my $plotmode   = "gnuplot";     						# Current plotmode
-my $plotsize	 = "800,200";                 # Size for a plot
-my $renderer   = "pgm5_renderer";						# Name of suitable renderer
+my $plotsize	 = "320,200";                 # Size for a plot
+my $renderer   = "pgm6_renderer";						# Name of suitable renderer
 my $rendrefresh= "00:15:00";								# Refresh Interval for the Renderer
-my $render_before = 1;									# Render graphics before drawing
-my $render_after = 0;										# Render graphics after drawing
+
 
 # Nothing to config below
 #########################
@@ -78,7 +77,6 @@ my %zoom;                     # the same as @zoom
 my $wname;                    # Web instance name
 my $data;                     # Filecontent from browser when editing a file
 my $lastxmllist;              # last time xmllist was parsed
-my $renderer_status;					# Status of the Renderer
 
 my ($lt, $ltstr);
 
@@ -88,9 +86,9 @@ my $n = 0;
 @zoom = ("qday", "day","week","month","year");
 %zoom = map { $_, $n++ } @zoom;
 
-open(FH, "$fhemwebdir/style.css") || fatal("$fhemwebdir/style.css: $!");  # Read in the template Stylesheet file
-my $css = join("", <FH>);
-close(FH);
+
+##################
+# iPhone Anpassungen:
 
 $me = "" if(!$me);
 my $q = new CGI;
@@ -108,7 +106,10 @@ $docmd = 1 if($cmd &&
               $cmd !~ /^style / &&
               $cmd !~ /^edit/);
               
-$cmdret = fhemcmd($cmd) if($docmd); 
+if($docmd) {              
+	$cmdret = fhemcmd($cmd); 
+	exit (0);
+}
                            
 parseXmlList($docmd);
 
@@ -134,26 +135,22 @@ if($cmd =~ m/^toweblink (.*)$/) {
 }
 
 print $q->header;
-print $q->start_html(-name=>$title, -title=>$title, -style=>{ -code=>$css });
+print $q->start_html(-name=>$title, -title=>$title, -meta=> {'viewport'=>'width=320; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;'}, -style =>{ -type=>'text/css', -media=>'screen', -src=>'./icons/iui.css'}, -script=>{ -type=>"application/x-javascript", -src=>"./icons/iui.js"});
 
-if($cmdret) {
-  $detail = "";
-  $room = "";
-  $cmdret =~ s/</&lt;/g;
-  $cmdret =~ s/>/&gt;/g;
-  print "<div id=\"right\">\n";
-  print "<pre>$cmdret</pre>\n";
-  print "</div>\n";
+if ($cmd =~ m/^style /) {
+	style($cmd,undef);
+} elsif ($detail) {
+	doDetail($detail);
+} elsif ($room && !$detail) {
+	showRoom();
+} elsif ($cmd =~ /^showlogwrapper/) {
+	showLogWrapper($cmd);
+} elsif ($cmd =~ m/^showarchive/) {
+	showArchive($cmd);
+} else {
+	roomOverview($cmd);
 }
 
-roomOverview($cmd);
-
-style($cmd,undef)    if($cmd =~ m/^style /);
-
-doDetail($detail)    if($detail);
-showRoom()           if($room && !$detail);
-showLogWrapper($cmd) if($cmd =~ /^showlogwrapper/);
-showArchive($cmd)    if($cmd =~ m/^showarchive/);
 print $q->end_html;
 exit(0);
 
@@ -289,7 +286,7 @@ parseXmlList($)
     $types{$devs{$d}{type}} = 1;
   }
   $title = $devs{global}{ATTR}{title}{VAL} ? 
-               $devs{global}{ATTR}{title}{VAL} : "HOME Management";
+               $devs{global}{ATTR}{title}{VAL} : "FHEM - Control";
   $room = $devs{$detail}{ATTR}{room}{VAL} if($detail);
 }
 
@@ -420,7 +417,7 @@ doDetail($)
         $devs{$d}{INT}, "", undef, 0, undef);
   makeTable($d, $t, "<a href=\"$doc#attr\">Attribute</a>,Value,Action",
         $devs{$d}{ATTR}, $devs{$d}{attrs}, "attr", 1,
-        $d eq "global" ? "" : "deleteattr");
+        $d eq "global" ? "" : "delattr");
   print "</td></tr></table>\n";
   print "</div>\n";
 
@@ -432,65 +429,38 @@ doDetail($)
 sub
 roomOverview($)
 {
+	
   my ($cmd) = @_;
-  print $q->start_form;
+	print"<div class=\"toolbar\">";
+	print"<h1 id=\"pageTitle\"></h1>";
+	print"   <a id=\"backButton\" class=\"button\" href=\"#\"></a>";
+	print"</div>";
 
-  print "<div id=\"hdr\">\n";
+	print "<ul id=\"home\" title=\"FHEM Control\" selected=\"true\">";
 
-  print "<table><tr><td>"; 
+  #########
+  #Alte Kommando-Zeile  
+  #  print "<a href=\"$doc\">Cmd</a>: ";
+  #  print $q->textfield(-name=>"cmd", -size=>30);
+
+
+  print "   <li class=\"group\">Rooms:</li>";
   
-  print "<a href=\"$doc\">Cmd</a>: ";
-  print $q->textfield(-name=>"cmd", -size=>30);
-
-  $scrolledweblinkcount = 0;
-  if($room) {
-    print $q->hidden(-name=>"room", -value=>"$room");
-    if(!$detail) {    # Global navigation buttons for weblink >= 2
-      calcWeblink(undef,undef);
-      if($scrolledweblinkcount) {
-        print "</td><td>";
-        print "&nbsp;&nbsp;";
-        zoomLink("zoom=-1", "Zoom-in.png", "zoom in", 0);
-        zoomLink("zoom=1",  "Zoom-out.png","zoom out", 0);
-        zoomLink("off=-1",  "Prev.png",    "prev", 0);
-        zoomLink("off=1",   "Next.png",    "next", 0);
-      }
-    }
-  }
-  print "</td></tr></table>";
-  print "</div>\n";
-
-  print "<div id=\"left\">\n";
-  print "  <table><tr><td>\n";  # Need for "right" compatibility
-  print "  <table class=\"room\" summary=\"Room list\">\n";
-  $room = "" if(!$room);
+ $room = "" if(!$room);
   foreach my $r (sort keys %rooms) {
     next if($r eq "hidden");
-    printf("    <tr%s>", $r eq $room ? " class=\"sel\"" : "");
-    print "<td><a href=\"$me?room=$r\">$r</a>";
-    print "</td></tr>\n";
+		print "   <li><a href=\"$me?room=$r\">$r</a></li>";
   }
+	print "   <li><a href=\"$me?room=all\">All together</a></li>";
 
-  printf("    <tr%s>",  "all" eq $room ? " class=\"sel\"" : "");
-  print "<td><a href=\"$me?room=all\">All together</a></td>";
-  print "    </tr>\n";
+  print "   <li class=\"group\">Help/Configuration:</li>";
+	print "   <li><a href=\"$howto\" target=\"_self\">Howto</a></li>";
+	print "   <li><a href=\"$faq\" target=\"_self\">FAQ</a></li>";
+	print "   <li><a href=\"$doc\" target=\"_self\">Details</a></li>";
+	print "   <li><a href=\"$me?cmd=style examples\">Examples</a></li>";
+	print "   <li><a href=\"$me?cmd=style list\">Edit files</a></li>";
 
-  print "  </table>\n";
-  print "  </td></tr>\n";
-  print "  <tr><td>\n";
-  print "    <table class=\"room\" summary=\"Help/Configuration\">\n";
-  print "      <tr><td><a href=\"$howto\">Howto</a></td></tr>\n";
-  print "      <tr><td><a href=\"$faq\">FAQ</a></td></tr>\n";
-  print "      <tr><td><a href=\"$doc\">Details</a></td></tr>\n";
-  my $sel = ($cmd =~ m/examples/) ? " class=\"sel\"" : "";
-  print "      <tr$sel><td><a href=\"$me?cmd=style examples\">Examples</a></td></tr>\n";
-  $sel = ($cmd =~ m/list/) ? " class=\"sel\"" : "";
-  print "      <tr$sel><td><a href=\"$me?cmd=style list\">Edit files</a></td></tr>\n";
-  print "    </table>\n";
-  print "  </td></tr>\n";
-  print "  </table>\n";
-  print "</div>\n";
-  print $q->end_form;
+	print "</ul>";
 }
 
 #################
@@ -521,9 +491,7 @@ showRoom()
   checkDirs();
   my $havelookedforrenderer;
 
-  print $q->start_form;
-  print "<div id=\"right\">\n";
-  print "  <table><tr><td>\n";  # Need for equal width of subtables
+  print $q->start_form( -id => $room, -title => $room, -class => 'panel', selected => 'true', action => $me.'?room='.$room);
 
   foreach my $type (sort keys %types) {
     
@@ -547,35 +515,26 @@ showRoom()
     # Print the table headers
     my $t = $type;
     $t = "EM" if($t =~ m/^EM.*$/);
-    print "  <table class=\"$t\" summary=\"List of $type devices\">\n";
 
     if($type eq "FS20") {
-      print "    <tr><th>FS20 dev.</th><th>State</th>";
-      print "<th colspan=\"2\">Set to</th>";
-      print "</tr>\n";
+			print "   <h2>FS20</h2>";
     }
     if($type eq "FHT") {
-      print "    <tr><th>FHT dev.</th><th>Measured</th>";
-      print "<th>Set to</th>";
-      print "</tr>\n";
+      #print "    <tr><th>FHT dev.</th><th>Measured</th>";
+			print "   <h2>FHT</h2>";
     }
 
-    my $hstart = "    <tr><th>";
-    my $hend   = "</th></tr>\n";
-    print $hstart . "Logs" . $hend                       if($type eq "FileLog");
-    print $hstart . "HMS/KS300</th><th>Readings" . $hend if($type eq "KS300");
-    print $hstart . "Scheduled commands (at)" . $hend    if($type eq "at");
-    print $hstart . "Triggers (notify)" . $hend          if($type eq "notify");
-    print $hstart . "Global variables" . $hend        if($type eq "_internal_");
+		print "   <h2>Logs</h2>"										if($type eq "FileLog");
+    print "   <h2>HMS/KS300  Readings</h2>" 		if($type eq "KS300");
+    print "   <h2>Scheduled commands (at)</h2>" if($type eq "at");
+    print "   <h2>Triggers (notify)</h2>"       if($type eq "notify");
+    print "   <h2>Global variables</h2>"        if($type eq "_internal_");
 
-    my $row=1;
+		print"    <fieldset>";
     foreach my $d (sort keys %devs ) {
 
       next if($devs{$d}{type} ne $type);
       next if($room && $room ne "all" && !$rooms{$room}{$d});
-
-      printf("    <tr class=\"%s\">", $row?"odd":"even");
-      $row = ($row+1)%2;
 
       #####################
       # Check if the icon exists
@@ -588,50 +547,55 @@ showRoom()
         my $iv = $v;
         my $iname = "";
 
-        if(defined($devs{$d}) &&
-           defined($devs{$d}{ATTR}{showtime})) {
-          $v = $devs{$d}{STATE}{state}{TIM};
-        } elsif($iv) {
-          $iv =~ s/ .*//; # Want to be able to have icons for "on-for-timer xxx"
-          $iname = $icons{"$type"}     if($icons{"$type"});
-          $iname = $icons{"$type.$iv"} if($icons{"$type.$iv"});
-          $iname = $icons{"$d"}        if($icons{"$d"});
-          $iname = $icons{"$d.$iv"}    if($icons{"$d.$iv"});
-        }
         $v = "" if(!defined($v));
+				print"         <div class=\"row\">";
+				print"             <label>$d</label>";
+				print"                <div class=\"toggle\" onclick=\"fhz_set_fs20('$me?cmd.$d=set $d ', this)\" ";		
+				if ($v eq "on") {
+					print "toggled='true'";
+				} else{
+				}		
+				print"> <span class=\"thumb\"></span><span class=\"toggleOn\">ON</span><span class=\"toggleOff\">OFF</span></div>";
+				print"         </div>";
 
-        print "<td><a href=\"$me?detail=$d\">$d</a></td>";
-        if($iname) {
-          print "<td align=\"center\"><img src=\"$relicondir/$iname\" " .
-                  "alt=\"$v\"/></td>";
-        } else {
-          print "<td align=\"center\">$v</td>";
-        }
-        if($devs{$d}{sets}) {
-          print "<td><a href=\"$me?cmd.$d=set $d on$rf\">on</a></td>";
-          print "<td><a href=\"$me?cmd.$d=set $d off$rf\">off</a></td>";
-        }
+		} elsif($type eq "FHT") {
 
-      } elsif($type eq "FHT") {
-
+				print "  <div class=\"row\">";
         $v = $devs{$d}{STATE}{"measured-temp"}{VAL};
         $v = "" if(!defined($v));
 
         $v =~ s/ .*//;
-        print "<td><a href=\"$me?detail=$d\">$d</a></td>";
-        print "<td align=\"center\">$v&deg;</td>";
 
+				print "  <table width=\"95%\"> <tr>";
+				print "  <td width=\"33%\" align=\"left\"> <b>$d</b></td>";
+
+				print "<td width=\"20%\" align=\"center\">";
+        print "$v&deg;";
+  			print "</td>";
+
+        print "<td width=\"33%\" align=\"right\">";
         $v = sprintf("%2.1f", int(2*$v)/2) if($v =~ m/[0-9.-]/);
         my @tv = map { ($_.".0", $_+0.5) } (16..26);
         $v = int($v*20)/$v if($v =~ m/^[0-9].$/);
         print $q->hidden("arg.$d", "desired-temp");
         print $q->hidden("dev.$d", $d);
-        print "<td>" .
-            $q->popup_menu(-name=>"val.$d", -values=>\@tv, -default=>$v) .
-            $q->submit(-name=>"cmd.$d", -value=>"set") . "</td>";
+        print $q->popup_menu(-name=>"val.$d", -values=>\@tv, -default=>$v, -class=>'input');  
+  			print "</td>";
+  			
+        print "<td align=\"right\">";
+
+        print $q->hidden("cmd.$d", "set");
+				print "<a class=\"button blueButton\" type=\"submit\">Set</a>";
+            
+        print "</td> </tr> </table>";
+        print "   </div>";
 
       } elsif($type eq "FileLog") {
-        print "<td><a href=\"$me?detail=$d\">$d</a></td><td>$v</td>\n";
+        
+ 				print "<div class=\"row\">";
+				print "  <table width=\"95%\"> <tr>";
+
+        print "<td align=\"left\">$d</td><td>$v</td>\n";
         if($devs{$d}{ATTR}{archivedir}) {
           print("<td><a href=\"$me?cmd=showarchive $d\">archive</a></td>");
         }
@@ -641,15 +605,20 @@ showRoom()
 	  			$l = \%h;
 				}
 
+
 				foreach my $f (fileList($devs{$d}{INT}{logfile}{VAL})) {
-	  			printf("    <tr class=\"%s\"><td>$f</td>", $row?"odd":"even");
-	  			$row = ($row+1)%2;
+					print "</tr> </table>";
+     			print "</div>";
+    			print "<div class=\"row\">";
+ 	    		print "  <table width=\"95%\"> <tr>";
+
+	  			print("<td align=\"left\">$f</td>");
+
 	  			foreach my $ln (split(",", $l->{VAL})) {
 		    		my ($lt, $name) = split(":", $ln);
 	    			$name = $lt if(!$name);
-	    			print("<td><a href=\"$me?cmd=showlogwrapper $d $lt $f\">$name</a></td>");
+	    			print("<td><a href=\"$me?cmd=showlogwrapper $d $lt $f\">$name</a></td>");	
 	  			}
-	  			print "</tr>";
 				}
 
       } elsif($type eq "weblink" && $room ne "all") {
@@ -683,12 +652,8 @@ showRoom()
 						 		fhemcmd ("attr $renderer plotsize $plotsize");
 						 		fhemcmd ("attr $renderer refresh $rendrefresh");
 						 		fhemcmd ("attr $renderer tmpfile $tmpfile");
+						 		fhemcmd ("set $renderer on");
 						 		fhemcmd ("get $renderer");
-							}  else {
-								$renderer_status = fhemcmd ("{\$attr{" . $renderer . "}{status} }");
-  							if (($renderer_status =~ m/off/) && ($render_before)) {
-									fhemcmd ("get $renderer");
-  							}								
 							}
 						}						
             print "<td>";
@@ -711,17 +676,14 @@ showRoom()
         }
 
       } else {
-        print "<td><a href=\"$me?detail=$d\">$d</a></td><td>$v</td>\n";
+ 				print "<div class=\"row\">";
+				print "<table width=\"95%\"> <tr>";
+        print "<td align=\"left\">$d</td><td>$v</td>\n";
       }
+      print "  </tr></table></div>";
     }
-    if (($havelookedforrenderer) && ($renderer_status =~ m/off/) && ($render_after)) {
-			fhemcmd ("define render_after at +00:01:30 get $renderer");
-  	}
-    print "  </table>\n";
-    print "  <br>\n"; # Empty line
+    print "  </fieldset>\n";
   }
-  print "  </td></tr>\n</table>\n";
-  print "</div>\n";
   print $q->end_form;
 }
 
@@ -785,11 +747,9 @@ showLogWrapper($)
 		 		fhemcmd ("attr $renderer plotsize $plotsize");
 		 		fhemcmd ("attr $renderer refresh $rendrefresh");
 		 		fhemcmd ("attr $renderer tmpfile $tmpfile");
+		 		fhemcmd ("set $renderer on");
 		 		fhemcmd ("get $renderer");
-			} else {
-				$renderer_status = fhemcmd ("{\$attr{" . $renderer . "}{status} }");
 			}
-			
 		}
     print "<div id=\"right\">\n";
     print "<table><tr></td>\n";
@@ -1129,3 +1089,4 @@ style($$)
 }
 
 1;
+

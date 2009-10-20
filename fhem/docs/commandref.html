@@ -49,7 +49,6 @@
   <ul>
       <a href="#global">global</a><br>
 
-      <a href="#BS">BS</a> &nbsp;
       <a href="#CM11">CM11</a> &nbsp;
       <a href="#CUL">CUL</a> &nbsp;
       <a href="#CUL_EM">CUL_EM</a> &nbsp;
@@ -85,11 +84,9 @@
   <b>Helper modules</b>
   <ul>
     <a href="#FileLog">FileLog</a> &nbsp;
-    <a href="#PachLog">PachLog</a> &nbsp;
     <a href="#SUNRISE_EL">SUNRISE_EL</a> &nbsp;
     <a href="#at">at</a> &nbsp;
     <a href="#dummy">dummy</a> &nbsp;
-    <a href="#dumpdef">dumpdef</a> &nbsp;
     <a href="#holiday">holiday</a> &nbsp;
     <a href="#notify">notify</a> &nbsp;
     <a href="#watchdog">watchdog</a> &nbsp;
@@ -187,8 +184,7 @@ use the client form of fhem.pl (described above).<br>
 
 Multiple fhem commands are separated by semicolon (;). In order to use semicolon
 in perl code or shell programs, they have to be escaped by the double semicolon
-(;;). See the <b>Notes</b> section of the <a href="#notify">notify</a>
-chapter on command parameters and escape rules.<br>
+(;;).<br>
 
 E.g. the following first command switches Lamp1 off at 07:00 and Lamp2
 immediately (at the point of definition), the second one switches both lamps
@@ -1010,7 +1006,7 @@ A line ending with \ will be concatenated with the next one, so long lines
 	Disable FileLog/notify/inform notification for a device. This affects
 	the received signal, the set and trigger commands.</li><br>
 
-    <li><a href="#attrdummy">dummy</a></li><br>
+    <li><a href="#dummy">dummy</a></li><br>
 
     <a name="filtertimeout"></a>
     <li>filtertimeout<br>
@@ -1426,7 +1422,7 @@ A line ending with \ will be concatenated with the next one, so long lines
   <b>Attributes</b>
   <ul>
     <li><a href="#do_not_notify">do_not_notify</a></li><br>
-    <li><a href="#attrdummy">dummy</a></li><br>
+    <li><a href="#dummy">dummy</a></li><br>
     <li><a href="#loglevel">loglevel</a></li><br>
     <li><a href="#model">model</a> (fht80b)</li><br>
     <li><a href="#showtime">showtime</a></li><br>
@@ -1493,7 +1489,7 @@ A line ending with \ will be concatenated with the next one, so long lines
       result of incomplete or buggy code</li>
 
       <li>Currently supported devices are the HMS100-T HMS100-TF HMS100-WD
-          HMS100-MG HMS100-TFK HMS100-CO HMS100-FIT RM100-2 RM100-3</li>
+          HMS100-MG HMS100-TFK HMS100-CO HMS100-FIT RM100-2 </li>
 
       <li>The housecode of the HMS devices may change if the battery is renewed.
       In order to make life easier, you can define a "wildcard" device for each
@@ -1541,13 +1537,11 @@ A line ending with \ will be concatenated with the next one, so long lines
 <a name="CUL"></a>
 <h3>CUL</h3>
 <ul>
-  The CUL/CUR/CUN is a family of RF devices sold by <a
-  href="http://www.busware.de">busware.de</a>.
-
-  With the opensource firmware (see this <a
-  href="http://www.koeniglich.de/culfw/culfw.html">link</a>) they are capable
-  to receive and send different 868MHz protocols (FS20/FHT/S300/EM/HMS).<br>
-
+  The CUL is an USB device sold by <a href="http://www.busware.de">busware.de
+  </a>. With the opensource firmware (see this <a
+  href="http://www.koeniglich.de/culfw/culfw.html">link</a>) it is
+  capable to receive and send different 868MHz protocols
+  (FS20/FHT/S300/EM/HMS).<br>
   <br>
   Some protocols (FS20/FHT) are converted by this module so that the same
   logical device can be used, irrespective if the radio telegram is received by
@@ -1560,24 +1554,17 @@ A line ending with \ will be concatenated with the next one, so long lines
   <a name="CULdefine"></a>
   <b>Define</b>
   <ul>
-    <code>define &lt;name&gt; CUL &lt;device&gt; &lt;housecode&gt;</code> <br>
+    <code>define &lt;name&gt; CUL &lt;serial-device&gt; &lt;housecode&gt; [mobile]</code> <br>
     <br>
-    USB-connected devices (CUL/CUR/CUN):<br><ul>
-    &lt;device&gt; specifies the serial port to communicate with the CUL or CUR.
-    The name of the serial-device depends on your distribution,
+    Specifies the serial port to communicate with the CUL or CUR.
+    The name(s) of the serial-device(s) depends on your distribution,
     under linux the cdc_acm kernel module is responsible, and usually a
-    /dev/ttyACM0 device will be created. If your distribution does not have a
-    cdc_acm module, you can force usbserial to handle the CUL by the following
-    command:<ul>modprobe usbserial vendor=0x03eb product=0x204b</ul>In this
-    case the device is most probably /dev/ttyUSB0.<br>
-    </ul>
-    Network-connected devices (CUN):<br><ul>
-    &lt;device&gt; specifies the host:port of the device. E.g. 192.168.0.244:2323
-    </ul>
+    /dev/ttyACM0 device will be created.
     <br>
-    If the device is called none, then no device will be opened, so you
+    If the serial-device is called none, then no device will be opened, so you
     can experiment without hardware attached.<br>
-
+    If you specify the "mobile" parameter, then fhem.pl won't block if the
+    device is removed. This is mainly intended for the CUR.<br>
     The housecode is a 4 digit hex number, and it is used when the CUL/CUR
     talks to FHT devices or when CUR requests data.
   </ul>
@@ -1626,7 +1613,7 @@ A line ending with \ will be concatenated with the next one, so long lines
   <b>Attributes</b>
   <ul>
     <li><a href="#do_not_notify">do_not_notify</a></li><br>
-    <li><a href="#attrdummy">dummy</a></li><br>
+    <li><a href="#dummy">dummy</a></li><br>
     <li><a href="#filtertimeout">filtertimeout</a></li><br>
     <li><a href="#repeater">repeater</a></li><br>
     <li><a href="#showtime">showtime</a></li><br>
@@ -1679,47 +1666,20 @@ A line ending with \ will be concatenated with the next one, so long lines
   from EMEM, EMWZ or EMGZ devices.
   <br><br>
 
-  <a name="CUL_EMdefine"></a>
+  <a name="CUL_WSdefine"></a>
   <b>Define</b>
   <ul>
-    <code>define &lt;name&gt; CUL_EM &lt;code&gt; [corr1 corr2
-                CostPerUnit BasicFeePerMonth]</code> <br>
+    <code>define &lt;name&gt; CUL_EM &lt;code&gt; [corr]</code> <br>
     <br>
     &lt;code&gt; is the code which must be set on the EM device. Valid values
-    are 1 through 12. 1-4 denotes EMWZ, 5-8 EMEM and 9-12 EMGZ devices.<br><br>
-
-    <b>corr1</b> is used to correct the current number, <b>corr2</b>
-    for the total number.
+    are 1 through 12. 1-4 denotes EMWZ, 5-8 EMEM and 9-12 EMGZ devices.<br>
+    corr (if specified) will be multiplied to the value delivered in the
+    message.<br>
     <ul>
       <li>for EMWZ devices you should specify the rotation speed (R/kW)
-          of your watt-meter (e.g. 150) for corr1 and 12 times this value for
-          corr2</li>
-      <li>for EMEM devices the corr1 value is 0.01, and the corr2 value is
-          0.001 </li>
+          of your watt-meter (e.g. 150)</li>
+      <li>for EMEM devices the correct value is 0.01.</li>
     </ul>
-    <br>
-
-    <b>CostPerUnit</b> and <b>BasicFeePerMonth</b> are used to compute your
-    daily and mothly fees. Your COST will appear in the log, generated once
-    daiy (without the basic fee) or month (with the bassic fee included). Your
-    definition should look like E.g.:
-    <pre>
-    define emwz 1 75 900 0.15 12.50</pre>
-    and the Log looks like:
-    <pre>
-    CUM_DAY: 6.849 CUM: 60123.4 COST: 1.02
-    CUM_MONTH: 212.319 CUM: 60123.4 COST: 44.34</pre>
-
-    Tipp: You can configure your EMWZ device to show in the CUM column of the
-    STATE reading the current reading of your meter. For this purpose: multiply
-    the current reading (from the real device) with the corr1 value (RperKW),
-    and substract the RAW CUM value from it. Now set the basis reading of your
-    EMWZ device (named emwz) to this value:<br>
-
-    <pre>
-    { $defs{emwz}{READINGS}{basis}{VAL} = &lt;computedvalue&gt; }</pre>
-
-
   </ul>
   <br>
 
@@ -1788,7 +1748,7 @@ A line ending with \ will be concatenated with the next one, so long lines
   <b>Attributes</b>
   <ul>
     <li><a href="#model">model</a> (em1010pc)</li>
-    <li><a href="#attrdummy">dummy</a></li>
+    <li><a href="#dummy">dummy</a></li>
     <li><a href="#loglevel">loglevel</a></li>
   </ul>
   <br>
@@ -1850,7 +1810,7 @@ A line ending with \ will be concatenated with the next one, so long lines
   <b>Attributes</b>
   <ul>
     <li><a href="#model">model</a> (EM1000WZ)</li>
-    <li><a href="#attrdummy">dummy</a></li>
+    <li><a href="#dummy">dummy</a></li>
     <li><a href="#loglevel">loglevel</a></li>
     <li><a href="#IODev">IODev</a></li><br>
   </ul>
@@ -1904,7 +1864,7 @@ A line ending with \ will be concatenated with the next one, so long lines
   <b>Attributes</b>
   <ul>
     <li><a href="#model">model</a> (EM1000GZ)</li>
-    <li><a href="#attrdummy">dummy</a></li>
+    <li><a href="#dummy">dummy</a></li>
     <li><a href="#loglevel">loglevel</a></li>
     <li><a href="#IODev">IODev</a></li><br>
   </ul>
@@ -1951,7 +1911,7 @@ A line ending with \ will be concatenated with the next one, so long lines
   <b>Attributes</b>
   <ul>
     <li><a href="#model">model</a> (EM1000EM)</li>
-    <li><a href="#attrdummy">dummy</a></li>
+    <li><a href="#dummy">dummy</a></li>
     <li><a href="#loglevel">loglevel</a></li>
     <li><a href="#IODev">IODev</a></li><br>
   </ul>
@@ -1967,7 +1927,6 @@ A line ending with \ will be concatenated with the next one, so long lines
   This module services messages received by the FHZ device, if you use one of
   the other alternetives, see the <a href="#WS300">WS300</a> or <a
   href="#CUL_WS">CUL_WS</a> entries.<br>
-  Note: The KS555 is also reported to work.<br>
   <br>
 
   <a name="KS300"></a>
@@ -2049,37 +2008,14 @@ A line ending with \ will be concatenated with the next one, so long lines
     <br>
   </ul>
 
-  <b>Set</b>
-  <ul>
-    <code>set &lt;name&gt; reopen</code>
-    <br><br>
-    Reopens the serial port.
-  </ul>
-  <br>
+  <b>Set</b> <ul>N/A</ul><br>
 
-  <b>Get</b>
-  <ul>
-    <code>get &lt;name&gt; fwrev</code>
-    <br><br>
-    Reads the firmware revision of the CM11 device. Returns <code>error</code>
-    if the serial connection to the device times out. Can be used for error
-    detection.
-    <br><br>
-
-    <code>get &lt;name&gt; time</code>
-    <br><br>
-    Reads the internal time of the device which is the total uptime (modulo one
-    year), since fhem sets the time to 0.00:00:00 if the device requests the time
-    to be set after being powered on. Returns <code>error</code>
-    if the serial connection to the device times out. Can be used for error
-    detection.
-  </ul>
-  <br>
+  <b>Get</b> <ul>N/A</ul><br>
 
   <b>Attributes</b>
   <ul>
     <li><a href="#do_not_notify">do_not_notify</a></li>
-    <li><a href="#attrdummy">dummy</a></li>
+    <li><a href="#dummy">dummy</a></li>
     <li><a href="#loglevel">loglevel</a></li>
     <li><a href="#model">model</a> (CM11)</li>
   </ul>
@@ -2183,7 +2119,7 @@ A line ending with \ will be concatenated with the next one, so long lines
   <ul>
     <li><a href="#follow-on-for-timer">follow-on-for-timer</a></li><br>
     <li><a href="#do_not_notify">do_not_notify</a></li><br>
-    <li><a href="#attrdummy">dummy</a></li><br>
+    <li><a href="#dummy">dummy</a></li><br>
     <li><a href="#showtime">showtime</a></li><br>
     <li><a href="#model">model</a> (lm12,lm15,am12,tm13)</li><br>
     <li><a href="#loglevel">loglevel</a></li>
@@ -2410,69 +2346,6 @@ A line ending with \ will be concatenated with the next one, so long lines
 </ul>
 
 
-<a name="BS"></a>
-<h3>BS</h3>
-<ul>
-  The module BS allows to collect data from a brightness sensor through a
-  <a href="#FHZ">FHZ</a> device. For details on the brightness sensor see
-  <a href="http://www.busware.de/tiki-index.php?page=CPM-BS">busware wiki</a>.
-  You can have at most nine different brightness sensors in range of your
-  FHZ.<br>
-  <br>
-
-  The state contains the brightness in % (reading <code>brightness</code>) and
-  the brightness in lux (reading <code>lux</code>). The <code>flags</code>
-  reading is always zero. The meaning of these readings is explained in more
-  detail on the above mentioned wiki page.<br>
-  <br>
-
-  <a name="BSDefine"></a>
-  <b>Define</b>
-  <ul>
-    <code>define &lt;name&gt; BS &lt;sensor#&gt; [&lt;RExt&gt;]</code>
-    <br><br>
-
-    <code>&lt;sensor#&gt;</code> is the number of sensor in the brightness
-    sensor address system that runs from 1 to 9.<br>
-    <br>
-    <code>&lt;RExt&gt;</code> is the value of the resistor on your brightness
-    sensor in &Omega; (Ohm). The brightness reading in % is proportional to the resistance, the
-    lux reading is proportional to the resistance squared. The value is
-    optional. The default resistance is RExt= 50.000&Omega;.<br>
-    <br>
-
-    Example:<br>
-    <ul>
-      <code>define bs1 BS 1 40000</code><br>
-    </ul>
-  </ul>
-  <br>
-
-  <b>Set </b>
-  <ul>
-    N/A
-  </ul>
-  <br>
-
-  <b>Get</b>
-  <ul>
-    N/A
-  </ul>
-  <br>
-
-  <b>Attributes</b>
-  <ul>
-    <li><a href="#do_not_notify">do_not_notify</a></li>
-    <li><a href="#showtime">showtime</a></li>
-    <li><a href="#loglevel">loglevel</a></li>
-    <li><a href="#model">model</a> (bs)</li>
-  </ul>
-  <br>
-
-</ul>
-
-
-
 
 <a name="SCIVT"></a>
 <h3>SCIVT</h3>
@@ -2674,7 +2547,7 @@ A line ending with \ will be concatenated with the next one, so long lines
 
   <b>Attributes</b>
   <ul>
-    <li><a href="#attrdummy">dummy</a></li><br>
+    <li><a href="#dummy">dummy</a></li><br>
     <li><a href="#loglevel">loglevel</a></li>
     <li><a href="#model">model</a> (M232Counter)</li>
   </ul>
@@ -2721,7 +2594,7 @@ A line ending with \ will be concatenated with the next one, so long lines
 
   <b>Attributes</b>
   <ul>
-    <li><a href="#attrdummy">dummy</a></li><br>
+    <li><a href="#dummy">dummy</a></li><br>
     <li><a href="#loglevel">loglevel</a></li>
     <li><a href="#model">model</a> (M232Voltage)</li>
   </ul>
@@ -3886,92 +3759,6 @@ isday, sunrise_coord</pre>
 </ul>
 
 
-<a name="PachLog"></a>
-<h3>PachLog</h3>
-<ul>
-  The PachLog module logs sensor data like temperature and humidity to <a
-  href=http://www.pachube.com>www.pachube.com</a>.<br>
-  <br>
-  <a name="PachLogdefine"></a>
-  <b>Define</b>
-  <ul>
-    <br><code>define &lt;name&gt; PachLog &lt;Pachube-API-Key&gt;</code> <br>
-    <br>
-    &lt;Pachube-API-Key&gt;:<br>
-        You need the Pachube-API-Key to authenticate your application to the
-        Pachube service.<br>
-	Don't share this with anyone: it's just like a password.<br>
-  </ul>
-  <br>
-
-  <a name="PachLog_Set"></a>
-  <b>Set</b>
-	<ul>
-		<br>
-		Add a new device for logging to www.pachube.com<br><br>
-		<code>set &lt;NAME&gt; ADD &lt;FHEM-DEVICENAME&gt; FEED-NR:ID:READING:ID:READING</code><br><br>
-		Example: KS300 weather data<br><br>
-		READING: temperature humidity wind rain<br><br>
-		1. Generate input feed on www.pachube.com => You get your
-                   FEED-NR: 1234<br>
-		2. Add datastreams to the feed:<br>
-		<ul>
-		<table>
-		<tr><td>ID</td><td>0</td><td>temperature</td></tr>
-		<tr><td>ID</td><td>1</td><td>humidity</td></tr>
-		<tr><td>ID</td><td>2</td><td>wind</td></tr>
-		<tr><td>ID</td><td>3</td><td>rain</td></tr></table><br>
-		</ul>
-		3. Add the KS300 to your PachLog device<br><br>
-		<code>set &lt;NAME&gt; ADD &lt;My-KS300&gt; 1234:0temperature:1:humidity:2:wind:3:rain</code><br><br>
-		Delete a device form logging to www.pachube.com<br><br>
-		<code>set &lt;NAME&gt; DEL &lt;FHEM-DEVICENAME&gt;</code><br><br>
-	</ul>
-	<br>
-
-  <b>Get</b> <ul>N/A</ul><br>
-  <b>Attributes</b> <ul>N/A</ul><br>
-</ul>
-
-
-<a name="dumpdef"></a>
-<h3>dumpdef</h3>
-<ul>
-  <code>dumpdef &lt;options&gt;</code>
-  <br><br>
-	Data::Dumper for FHEM-Devices/Hashes<br><br>
-	Dumps the content of &lt;options&gt; to FHEMWEB<br><br>
-	Options:<br><br>
-	<ul>
-	<table>
-	<tr><td><code>FHEM-DEVICENAME</code></td><td>=></td><td><code>%defs{FHEM-DEVICENAME}+%attr{FHEM-DEVICENAME}</code></td></tr>
-	<tr><td><code>MOD</code></td><td>=></td><td><code>%modules</code></td></tr>
-	<tr><td><code>SEL</code></td><td>=></td><td><code>%selectlist</code></td></tr>
-	<tr><td><code>DAT</code></td><td>=></td><td><code>%data</code></td></tr>
-	<tr><td><code>CMD</code></td><td>=></td><td><code>%cmd</code></td></tr>
-	</table>
-	</ul>
-  <br><br>
-  Example:
-  <ul><br>
-    <code>dumpdef TEST</code><br><br>
-    <ul><code>CALLER => main: /opt/fhz/FHEM/01_FHEMWEB.pm LINE: 194 SUB: main::FW_AnswerCall<br>
-	SUB-NAME: main::Commanddumpdef<br>
-	DUMP-DEVICE: TEST <br>
-	$VAR1 = {<ul><code>
-			  'IODev' => {},<br>
-			  'NAME' => 'TEST',<br>
-			  'NR' => 64,<br>
-			  'STATE' => '???',<br>
-			  'TYPE' => 'dummy'<br>
-			};</code></ul>
-	<code>DUMP-DEVICE-ATTR<br>
-	$VAR1 = {</code><ul><code>
-			  'room' => 'DEF_DUMMY,GRP.TEST'<br>
-			};</ul></code>
-	</code></ul><br>
-  </ul>
-</ul>
 
 <a name="perl"></a>
 <h3>Perl specials</h3>

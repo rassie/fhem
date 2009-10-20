@@ -79,9 +79,6 @@ EMWZ_GetStatus($)
   $hash->{READINGS}{cum_kWh}{VAL} = 0 if(!$hash->{READINGS}{cum_kWh}{VAL});
   $vals{"cum_kWh"} = sprintf("%0.3f",
                       $hash->{READINGS}{cum_kWh}{VAL} + $vals{"energy"}); 
-  $vals{summary} = sprintf("Pulses: %s Energy: %s Power: %s Cum: %s",
-                      $vals{"5min_pulses"}, $vals{energy},
-                      $vals{power}, $vals{cum_kWh});
   
 
   my $tn = TimeNow();
@@ -128,26 +125,31 @@ sub
 EMWZ_Set($@)
 {
   my ($hash, @a) = @_;
+  my $u = "Usage: set <name> <type> <value>, " .
+                "<type> is one of price,alarm,rperkw";
+
+  return $u if(int(@a) != 3);
 
   my $name = $hash->{NAME};
+  return "" if(IsIoDummy($name));
 
   my $v = $a[2];
   my $d = $hash->{DEVNR};
   my $msg;
 
-  if($a[1] eq "price" && int(@a) == 3) {
+  if($a[1] eq "price") {
     $v *= 10000; # Make display and input the same
     $msg = sprintf("79%02x2f02%02x%02x", $d-1, $v%256, int($v/256));
-  } elsif($a[1] eq "alarm" && int(@a) == 3) {
+  } elsif($a[1] eq "alarm") {
     $msg = sprintf("79%02x2d02%02x%02x", $d-1, $v%256, int($v/256));
-  } elsif($a[1] eq "rperkw" && int(@a) == 3) {
+  } elsif($a[1] eq "rperkw") {
     $v *= 10; # Make display and input the same
     $msg = sprintf("79%02x3102%02x%02x", $d-1, $v%256, int($v/256));
   } else {
-    return "Unknown argument $a[1], choose one of price alarm rperkw";
+    return $u;
   }
 
-  return "" if(IsIoDummy($name));
+
   my $ret = IOWrite($hash, $msg);
   if(!defined($ret)) {
     my $msg = "EMWZ $name read error (Set)";

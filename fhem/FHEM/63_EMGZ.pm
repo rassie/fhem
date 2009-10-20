@@ -103,10 +103,12 @@ EMGZ_Get($@)
 {
   my ($hash, @a) = @_;
 
+  return "argument is missing" if(int(@a) != 2);
+
   my $d = $hash->{DEVNR};
   my $msg;
 
-  if($a[1] ne "status" && int(@a) != 2) {
+  if($a[1] ne "status") {
     return "unknown get value, valid is status";
   }
   $hash->{LOCAL} = 1;
@@ -120,21 +122,26 @@ sub
 EMGZ_Set($@)
 {
   my ($hash, @a) = @_;
+  my $u = "Usage: set <name> <type> <value>, " .
+                "<type> is price";
+
+  return $u if(int(@a) != 3);
+
   my $name = $hash->{NAME};
+  return "" if(IsIoDummy($name));
 
   my $v = $a[2];
   my $d = $hash->{DEVNR};
   my $msg;
 
-  if($a[1] eq "price" && int(@a) != 3) {
+  if($a[1] eq "price") {
     $v *= 10000; # Make display and input the same
     $msg = sprintf("79%02x2f02%02x%02x", $d-1, $v%256, int($v/256));
   } else {
-    return "Unknown argument $a[1], choose one of price";
+    return $u;
   }
 
 
-  return "" if(IsIoDummy($name));
   my $ret = IOWrite($hash, $msg);
   if(!defined($ret)) {
     $msg = "EMWZ $name read error (Set)";

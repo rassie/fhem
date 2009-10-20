@@ -21,7 +21,6 @@ sub FW_showWeblink($$$);
 sub FW_select($$$);
 sub FW_textfield($$);
 sub FW_submit($$);
-sub FW_substcfg($$$$$$);
 sub FW_style($$);
 sub FW_roomOverview($);
 sub FW_fatal($);
@@ -117,7 +116,7 @@ FW_Undef($$)
 
   if(defined($hash->{CD})) {                   # Clients
     close($hash->{CD});
-    delete($selectlist{$name});
+    delete($selectlist{$hash->{NAME}});
   }
   if(defined($hash->{SERVERSOCKET})) {          # Server
     close($hash->{SERVERSOCKET});
@@ -148,7 +147,6 @@ FW_Read($)
     my @clientsock = sockaddr_in($clientinfo[1]);
 
     my %nhash;
-    $nhash{NR}    = $devcount++;
     $nhash{NAME}  = "FHEMWEB:". inet_ntoa($clientsock[1]) .":".$clientsock[0];
     $nhash{FD}    = $clientinfo[0]->fileno();
     $nhash{CD}    = $clientinfo[0];     # sysread / close won't work on fileno
@@ -229,34 +227,21 @@ FW_AnswerCall($)
     close(FH);
     $__RETTYPE = "text/plain; charset=ISO-8859-1" if($f !~ m/\.*html$/);
     return 1;
-
   } elsif($arg =~ m,^$__ME/(.*).css,) {
     open(FH, "$__dir/$1.css") || return;
     pO join("", <FH>);
     close(FH);
     $__RETTYPE = "text/css";
     return 1;
-
   } elsif($arg =~ m,^$__ME/icons/(.*)$,) {
     open(FH, "$__dir/$1") || return;
-    binmode (FH); # necessary for Windows
     pO join("", <FH>);
     close(FH);
-    my @f_ext = split(/\./,$1); #kpb
-    $__RETTYPE = "image/$f_ext[-1]";
+    $__RETTYPE = "image/*";
     return 1;
-
- } elsif($arg =~ m,^$__ME/(.*).js,) { #kpb java include
-    open(FH, "$__dir/$1.js") || return;
-    pO join("", <FH>);
-    close(FH);
-    $__RETTYPE = "application/javascript";
-    return 1;
-
   } elsif($arg !~ m/^$__ME(.*)/) {
     Log(5, "Unknown document $arg requested");
     return 0;
-
   }
 
   ##############################
@@ -803,7 +788,6 @@ FW_logWrapper($)
       pO "<div id=\"right\">$path: $!</div>\n";
       return;
     }
-    binmode (FH); # necessary for Windows
     my $cnt = join("", <FH>);
     close(FH);
     $cnt =~ s/</&lt;/g;
@@ -846,7 +830,6 @@ FW_readgplotfile($$$)
   my (@filelog, @data, $plot);
   open(FH, $gplot_pgm) || return (FW_fatal("$gplot_pgm: $!"), undef);
   while(my $l = <FH>) {
-    $l =~ s/\r//g;
     if($l =~ m/^#FileLog (.*)$/) {
       push(@filelog, $1);
     } elsif($l =~ "^plot" || $plot) {
@@ -865,7 +848,7 @@ FW_substcfg($$$$$$)
 {
   my ($splitret, $wl, $cfg, $plot, $file, $tmpfile) = @_;
 
-  # interpret title and label as a perl command and make
+  # interprete title and label as a perl command and open accessiblity
   # to all internal values e.g. $value.
 
   my $oll = $attr{global}{verbose};
@@ -900,12 +883,9 @@ FW_substcfg($$$$$$)
     }
   }
 
-  $plot =~ s/\r//g;             # For our windows friends...
-  $gplot_script =~ s/\r//g;
-
-  if($splitret == 1) {
+  if($splitret) {
     my @ret = split("\n", $gplot_script); 
-    return (\@ret, $plot);
+    return \@ret;
   } else {
     return $gplot_script;
   }
@@ -992,7 +972,6 @@ FW_showLog($)
     }
     $__RETTYPE = "image/png";
     open(FH, "$tmpfile.png");         # read in the result and send it
-    binmode (FH); # necessary for Windows
     pO join("", <FH>);
     close(FH);
     unlink("$tmpfile.png");
@@ -1012,7 +991,7 @@ FW_showLog($)
       Log 0, $ret if($ret);
     }
     $ret = fC("get $d $file INT $f $t " . join(" ", @{$flog}));
-    ($cfg, $plot) = FW_substcfg(1, $wl, $cfg, $plot, $file, "<OuT>");
+    $cfg = FW_substcfg(1, $wl, $cfg, $plot, $file, "<OuT>");
     SVG_render($f, $t, $cfg, $internal_data, $plot);
     $__RETTYPE = "image/svg+xml";
 
@@ -1334,8 +1313,7 @@ FW_style($$)
       pO "$f: $!";
       return;
     }
-    $__data =~ s/\r//g if($^O !~ m/Win/);
-    binmode (FH);
+    $__data =~ s/\r//g if($^O ne 'MSWin32');
     print FH $__data;
     close(FH);
     FW_style("style list", "Saved file $f");

@@ -144,7 +144,7 @@ FHT_Initialize($)
   $hash->{UndefFn}   = "FHT_Undef";
   $hash->{ParseFn}   = "FHT_Parse";
   $hash->{AttrList}  = "IODev do_not_notify:0,1 model;fht80b dummy:0,1 " .
-                  "showtime:0,1 loglevel:0,1,2,3,4,5,6 retrycount minfhtbuffer ".
+                  "showtime:0,1 loglevel:0,1,2,3,4,5,6 retrycount minfhtbuffer".
                   "lazy tmpcorr";
 }
 
@@ -164,10 +164,10 @@ FHT_Set($@)
     splice(@a,$i,1,("report1","255","report2","255"))
         if($a[$i] eq "refreshvalues");
 
-    if($a[$i] eq "time") {
+    if($a[$i] eq "time") {                              # CUL hack
       my @t = localtime;
       splice(@a,$i,1,("hour",$t[2],"minute",$t[1]));
-      IOWrite($hash, "", sprintf("T04%x", $t[0]))                # CUL hack
+      IOWrite($hash, "", sprintf("T04%x", $t[0]) )
                   if($hash->{IODev} && $hash->{IODev}->{TYPE} eq "CUL");
     }
   }
@@ -237,9 +237,7 @@ FHT_Set($@)
     }
 
 
-    if($lazy &&
-    	$cmd ne "report1" && $cmd ne "report2" && $cmd ne "refreshvalues" &&
-    	defined($readings->{$cmd}) && $readings->{$cmd}{VAL} eq $val) {
+    if($lazy && defined($readings->{$cmd}) && $readings->{$cmd}{VAL} eq $val) {
     	$ret .= "Lazy mode ignores $cmd";
     	Log GetLogLevel($name,2), "Lazy mode ignores $cmd $val";
 

@@ -466,7 +466,7 @@
   - bugfix:  deleting at / watchdog while active creates an empty device
   - feature: ExactId trigger added for wildcard HMS devices
 
-- 2009-07-03 (4.6)
+- =DATE= (4.6)
   - bugfix:  fht actuator message clarification by Klaus
   - feature: getstate command from Martin (25.12)
   - bugfix:  at drifts for relative timespecs
@@ -511,23 +511,3 @@
   - feature: CUL shutdown procedure added
   - feature: 14_CUL_WS: better error checking
   - bugfix:  webpgm2 multi line editing is working again
-
-- =DATE= (4.7)
-  - bugfix:  Reattached corrupted CUL device caused uninitialized message
-  - bugfix:  CUL/HMS changes, HMS cleanup
-  - bugfix:  EM/EMWZ/EMGZ set changed to work in FHEMWEB
-  - bugfix:  Avoid unitialized in xmllist for corrupt readings (reporter: Boris)
-  - bugfix:  Add binmode to 01_fhemweb.pm for windows
-  - bugfix:  Uniform check for windows, enable CUL for windows.
-  - bugfix:  CUL/HMS parsing patches from Peter
-  - bugfix:  Fixes for Windows by Klaus
-  - bugfix:  Another "rereadcfg" bugfix
-  - feature: Update to the current (1.27) CUL FHT interface
-  - feature: suppress inplausible readings from USF1000
-  - feature: get time, fwrev, set reopen for CM11 (Boris 2009-09-12)
-  - bugfix:  FHZ_ReadAnswer bugfix for Windows (Klaus, 20.8.2009)
-  - feature: CUL: device acces code reorganized, TCP/IP support added
-  - feature: Pachube module from Axel
-  - feature: dumpdef module from Axel in contrib
-  - feature: javascripting support in FHEMWEB (Klaus/Axel)
-  - feature: Module 09_BS.pm for brightness sensor added (Boris 2009-09-20)

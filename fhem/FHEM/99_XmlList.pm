@@ -76,11 +76,9 @@ CommandXmlList($$)
       my $r = $p->{READINGS};
       if($r) {
         foreach my $c (sort keys %{$r}) {
-          my $h = $r->{$c};
-          next if(!$h->{VAL} || !$h->{TIME});
 	  $str .=
             sprintf("\t\t\t<STATE key=\"%s\" value=\"%s\" measured=\"%s\"/>\n",
-                XmlEscape($c), XmlEscape($h->{VAL}), $h->{TIME});
+                XmlEscape($c), XmlEscape($r->{$c}{VAL}), $r->{$c}{TIME});
         }
       }
       $str .= "\t\t</$t>\n";
